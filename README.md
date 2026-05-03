@@ -11,12 +11,9 @@ Features
 
 Installation
 To run MedLens locally, follow these steps:
-1. Clone the repository:
-git clone https://github.com/anushamallik/MedLens.git
-cd MedLens
 
-2.Install required dependencies:
+1.Install required dependencies:
 pip install -r requirements.txt
 
-3.Run the app:
+2.Run the app:
 streamlit run app.py
