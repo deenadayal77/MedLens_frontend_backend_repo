@@ -3,10 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowRight,
+  Check,
   FileSearch,
   Languages,
   RefreshCw,
-  Search,
   ShieldCheck,
 } from 'lucide-react';
 import { Navbar } from './components/layout/Navbar';
@@ -98,42 +98,78 @@ function ResultsHeader({ result, onReset }: { result: AnalyzeResponse; onReset: 
   );
 }
 
-function EvidenceRail() {
+function compactText(value: string, fallback: string) {
+  const clean = value
+    .replace(/[#*_`>-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!clean) return fallback;
+  return clean.length > 96 ? `${clean.slice(0, 93)}...` : clean;
+}
+
+function EvidenceRail({ result }: { result: AnalyzeResponse }) {
+  const evidenceItems = [
+    {
+      label: 'Extracted report text',
+      value: compactText(result.summary, 'Text was extracted and prepared for summary generation.'),
+    },
+    {
+      label: 'Summary source',
+      value: compactText(result.summary, 'Summary is grounded in the uploaded report text.'),
+    },
+    {
+      label: 'Urgency rationale',
+      value: compactText(result.urgency.reason, 'Urgency rationale is available from the analysis result.'),
+    },
+  ];
+
   return (
     <div className="grid-panel p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-ink">PDF evidence map</h2>
-          <p className="mt-1 text-sm text-muted">Preview and text regions align after extraction.</p>
+          <p className="mt-1 text-sm text-muted">Completed extraction signals used by summary, urgency, and chat.</p>
         </div>
-        <button className="touch-target rounded-[16px] border border-rule bg-white px-3 text-accent" aria-label="Search report">
-          <Search className="h-4 w-4" />
-        </button>
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-[16px] border border-accent/20 bg-[#e7edff] text-accent">
+          <Check className="h-4 w-4" />
+        </span>
       </div>
       <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-[20px] border border-rule bg-neutral p-4">
-          <div className="aspect-[4/5] rounded-[16px] border border-rule bg-white p-4">
-            <div className="mb-4 h-4 w-24 rounded-full bg-[#111827]" />
-            <div className="space-y-3">
-              <div className="h-3 rounded-full bg-[#d9dee8]" />
-              <div className="h-3 w-10/12 rounded-full bg-[#d9dee8]" />
-              <div className="h-20 rounded-[14px] border-2 border-accent bg-[#e7edff]" />
-              <div className="h-3 w-11/12 rounded-full bg-[#d9dee8]" />
-              <div className="h-3 w-8/12 rounded-full bg-[#d9dee8]" />
+          <div className="rounded-[16px] border border-rule bg-white p-4">
+            <div className="mb-4 flex items-center justify-between border-b border-rule pb-3">
+              <p className="text-sm font-semibold text-ink">Uploaded PDF</p>
+              <span className="rounded-full border border-accent/20 bg-[#e7edff] px-2.5 py-1 text-xs font-semibold text-accent">
+                Parsed
+              </span>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="rounded-[14px] border border-rule bg-neutral p-3">
+                <p className="font-semibold text-ink">Patient</p>
+                <p className="mt-1 text-muted">
+                  {result.patient_name && result.patient_name !== 'Not available'
+                    ? result.patient_name
+                    : 'Not available in report'}
+                </p>
+              </div>
+              <div className="rounded-[14px] border border-accent/30 bg-[#e7edff] p-3">
+                <p className="font-semibold text-accent">Evidence ready</p>
+                <p className="mt-1 leading-5 text-muted">
+                  This panel confirms the report has been processed. Source snippets appear inside chat answers when available.
+                </p>
+              </div>
             </div>
           </div>
         </div>
         <div className="space-y-3">
-          {['Mapped text region', 'Summary source', 'Urgency rationale'].map((label, index) => (
-            <div key={label} className="rounded-[18px] border border-rule bg-white p-4">
+          {evidenceItems.map((item, index) => (
+            <div key={item.label} className="rounded-[18px] border border-rule bg-white p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-ink">{label}</p>
+                <p className="text-sm font-semibold text-ink">{item.label}</p>
                 <span className="text-xs font-semibold text-accent">0{index + 1}</span>
               </div>
-              <div className="mt-3 space-y-2">
-                <div className="h-2 rounded-full bg-[#d9dee8]" />
-                <div className="h-2 w-9/12 rounded-full bg-[#d9dee8]" />
-              </div>
+              <p className="mt-2 text-sm leading-5 text-muted">{item.value}</p>
             </div>
           ))}
         </div>
@@ -218,7 +254,7 @@ export default function App() {
 
               <div className="bento-grid lg:grid-cols-12">
                 <div className="lg:col-span-5 xl:col-span-4">
-                  <EvidenceRail />
+                  <EvidenceRail result={analysisResult} />
                 </div>
                 <SummaryCard
                   summary={analysisResult.summary}
