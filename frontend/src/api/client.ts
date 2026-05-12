@@ -1,8 +1,10 @@
 import axios from 'axios';
 import type { AnalyzeResponse, ChatResponse, TranslateResponse } from '../types';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 300_000, // AI calls can be slow on full medical PDFs
 });
 
@@ -38,7 +40,7 @@ export async function translateText(
 
 export function getTTSUrl(text: string, languageCode: string): string {
   const params = new URLSearchParams({ text, language_code: languageCode });
-  return `/api/tts?${params}`;
+  return `${API_BASE_URL}/tts?${params}`;
 }
 
 export async function fetchTTSBlob(text: string, languageCode: string): Promise<Blob> {

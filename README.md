@@ -72,11 +72,67 @@ Open:
 http://127.0.0.1:5173
 ```
 
+For local development, create `frontend/.env`:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000/api
+```
+
 Production build:
 
 ```bash
 npm run build
 ```
+
+## Deployment
+
+### Backend on Railway
+
+Deploy the repository root to Railway. Railway uses `railway.json` and the root `requirements.txt` to install backend dependencies and run:
+
+```bash
+uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+```
+
+Set these Railway variables:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+MEDLENS_GEMINI_MODEL=gemini-2.5-flash
+MEDLENS_GEMINI_CHAT_MODEL=gemini-2.5-flash
+MEDLENS_GEMINI_EMBEDDING_MODEL=models/gemini-embedding-001
+CORS_ORIGINS=https://your-vercel-app.vercel.app
+```
+
+After Railway deploys, test:
+
+```text
+https://your-railway-backend.up.railway.app/health
+```
+
+### Frontend on Vercel
+
+Create the Vercel project from the same GitHub repo and set the project root to:
+
+```text
+frontend
+```
+
+Use:
+
+```text
+Framework Preset: Vite
+Build Command: npm run build
+Output Directory: dist
+```
+
+Set this Vercel variable:
+
+```env
+VITE_API_BASE_URL=https://your-railway-backend.up.railway.app/api
+```
+
+After Vercel gives you the frontend URL, add that exact URL to Railway `CORS_ORIGINS`.
 
 ## Tampermonkey Helper
 
