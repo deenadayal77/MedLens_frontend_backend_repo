@@ -1,0 +1,1 @@
+"""MedLens FastAPI backend package."""
