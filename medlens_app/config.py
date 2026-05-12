@@ -29,11 +29,13 @@ Use only the report context below to create a patient-friendly explanation.
 Do not diagnose, prescribe treatment, or give medical advice.
 Keep the tone calm, clear, and non-alarming.
 If the report is unclear, say that directly instead of guessing.
+Do not begin with generic filler like "Here is a patient-friendly explanation".
+If the report contains negative or normal findings, state that clearly.
 
 Write the response in three short sections with markdown headings:
-1. Key findings
-2. What this means in simple language
-3. Questions to discuss with a doctor
+### Key findings
+### What this means in simple language
+### Questions to discuss with a doctor
 
 Report Context:
 {context}

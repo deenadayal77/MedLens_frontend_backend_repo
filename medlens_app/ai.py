@@ -29,7 +29,8 @@ def get_summary_llm() -> ChatGoogleGenerativeAI:
     return ChatGoogleGenerativeAI(
         model=DEFAULT_GEMINI_MODEL,
         temperature=0,
-        max_output_tokens=500,
+        max_tokens=700,
+        thinking_budget=0,
     )
 
 
@@ -38,7 +39,8 @@ def get_chat_llm() -> ChatGoogleGenerativeAI:
     return ChatGoogleGenerativeAI(
         model=DEFAULT_GEMINI_CHAT_MODEL,
         temperature=0,
-        max_output_tokens=700,
+        max_tokens=700,
+        thinking_budget=0,
     )
 
 

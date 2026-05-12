@@ -24,6 +24,19 @@ def normalize_report_text(text: str) -> str:
     return text.strip()
 
 
+def remove_report_boilerplate(text: str) -> str:
+    patterns = [
+        r"(?im)^page \d+ of \d+\s*$",
+        r"(?im)^report approved on\s*$",
+        r"(?im)^nationalrad\s*\|.*$",
+        r"(?im)^this report was electronically signed.*$",
+        r"(?im)^\[\s*nationalrad.*\]\s*$",
+    ]
+    for pattern in patterns:
+        text = re.sub(pattern, "", text)
+    return normalize_report_text(text)
+
+
 def extract_patient_name(text: str) -> str:
     patterns = [
         r"(?im)^(?:patient|patient name|name)\s*[:\-]\s*(.+)$",
@@ -47,13 +60,34 @@ def extract_findings_section(text: str) -> str:
     for pattern in patterns:
         match = re.search(pattern, text)
         if match:
-            return normalize_report_text(match.group(1))
+            return remove_report_boilerplate(match.group(1))
+    return ""
+
+
+def extract_impression_section(text: str) -> str:
+    patterns = [
+        r"(?is)impression\s*[:\-]?\s*(.+?)(?=\n(?:signed|electronically signed|\[|$))",
+        r"(?is)conclusion\s*[:\-]?\s*(.+?)(?=\n(?:signed|electronically signed|\[|$))",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return remove_report_boilerplate(match.group(1))
     return ""
 
 
 def derive_primary_context(text: str) -> str:
     findings = extract_findings_section(text)
-    if findings and len(findings) >= 80:
-        return findings
-    return text
+    impression = extract_impression_section(text)
 
+    sections = []
+    if impression:
+        sections.append(f"IMPRESSION\n{impression}")
+    if findings:
+        sections.append(f"FINDINGS\n{findings}")
+
+    combined = "\n\n".join(section for section in sections if section.strip())
+    if combined and len(combined) >= 80:
+        return combined
+    return remove_report_boilerplate(text)
