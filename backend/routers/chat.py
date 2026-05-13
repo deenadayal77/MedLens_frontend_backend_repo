@@ -7,6 +7,7 @@ from io import BytesIO
 from fastapi.responses import StreamingResponse
 
 from backend.core.ai import build_vectorstore, build_chat_chain, chatbot_response
+from backend.core.errors import ai_service_exception
 from backend.core.models import (
     ChatRequest, ChatResponse,
     TranslateRequest, TranslateResponse,
@@ -46,7 +47,7 @@ async def chat(request: ChatRequest):
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Chat failed: {exc}")
+        raise ai_service_exception(exc, "Chat") from exc
 
     return ChatResponse(answer=reply.answer, source_chunks=reply.source_chunks)
 

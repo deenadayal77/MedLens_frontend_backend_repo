@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { analyzeReport } from '../api/client';
 import { useAppStore } from '../store/appStore';
+import { getAnalysisErrorMessage } from '../utils/errors';
 
 export function useAnalysis() {
   const { setPhase, setAnalysisResult, setError, reset } = useAppStore();
@@ -12,8 +13,7 @@ export function useAnalysis() {
       const result = await analyzeReport(file);
       setAnalysisResult(result);
     } catch (err: any) {
-      const message = err?.response?.data?.detail ?? err?.message ?? 'Analysis failed. Check your API key and try again.';
-      setError(message);
+      setError(getAnalysisErrorMessage(err));
     }
   }, [reset, setPhase, setAnalysisResult, setError]);
 

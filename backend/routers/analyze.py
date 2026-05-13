@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from backend.core.ai import classify_urgency, generate_summary_from_context
+from backend.core.errors import ai_service_exception
 from backend.core.models import AnalyzeResponse, UrgencyResponse
 from backend.core.report_processing import (
     derive_primary_context,
@@ -37,7 +38,7 @@ async def analyze_report(file: UploadFile = File(...)):
         summary = generate_summary_from_context(primary_context)
         urgency = classify_urgency(summary=summary, full_report_text=report_text)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {exc}")
+        raise ai_service_exception(exc, "Analysis") from exc
 
     from backend.core.models import AnalysisResult as _AR
     result = _AR(
