@@ -75,15 +75,11 @@ For "cure" or treatment questions, explain that treatment depends on the final d
 If the urgency is HIGH or CRITICAL, mention that prompt medical review is safest.
 Keep the tone calm, friendly, and practical.
 
-Format every answer as:
-Answer:
-<2 to 4 short sentences that directly answer the question>
-
-What the report says:
-- <2 to 4 bullets grounded in the report>
-
-Next step:
-<one practical next step to discuss with a doctor>
+Write a compact answer in 3 to 6 short sentences.
+Do not use markdown headings such as "Answer", "What the report says", or "Next step".
+Do not repeat the full urgency summary unless the user asks about urgency.
+When helpful, mention one or two specific report findings that support the answer.
+End with one practical next step only when it helps answer the question.
 """
 
 QUESTION_REWRITE_PROMPT = """

@@ -17,9 +17,21 @@ interface MessageBubbleProps {
   onReply?: (prompt: string) => void;
 }
 
+function directAnswerText(content: string) {
+  return content
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !/^(answer|what the report says|next step):\s*$/i.test(line))
+    .map((line) => line.replace(/^(answer|what the report says|next step):\s*/i, ''))
+    .join('\n');
+}
+
 export function MessageBubble({ message, onReply }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isError = message.status === 'error';
+  const isFollowUpAnswer = Boolean(message.prompt);
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -29,7 +41,9 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
   );
 
   const handleCopy = async () => {
-    await navigator.clipboard?.writeText(productResponseToText(structured));
+    await navigator.clipboard?.writeText(
+      isFollowUpAnswer ? directAnswerText(message.content) : productResponseToText(structured),
+    );
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
   };
@@ -62,6 +76,37 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         {isError ? (
           <div className="w-full rounded-[22px] rounded-bl-md border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700">
             {message.content}
+          </div>
+        ) : isFollowUpAnswer ? (
+          <div className="w-full rounded-[22px] rounded-bl-md border border-rule bg-white p-4 shadow-glow">
+            <div className="mb-3 flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[16px] border border-rule bg-neutral text-accent">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-accent">Based on your PDF</p>
+                <p className="mt-1 text-sm font-semibold text-ink">Answer</p>
+              </div>
+            </div>
+            <div className="whitespace-pre-line text-sm leading-7 text-muted">
+              {directAnswerText(message.content)}
+            </div>
+            <div className="mt-4 grid grid-cols-2 border-t border-rule pt-3">
+              <button
+                onClick={() => onReply?.(`Can you explain this more simply: ${message.prompt}`)}
+                className="touch-target flex items-center justify-center gap-1.5 text-xs font-semibold text-muted transition-colors hover:text-accent"
+              >
+                <MessageCircleReply className="h-3.5 w-3.5" />
+                Reply
+              </button>
+              <button
+                onClick={handleCopy}
+                className="touch-target flex items-center justify-center gap-1.5 border-l border-rule text-xs font-semibold text-muted transition-colors hover:text-accent"
+              >
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
           </div>
         ) : (
         <div className="w-full overflow-hidden rounded-[24px] rounded-bl-md border border-rule bg-white shadow-glow">
