@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { sendChat } from '../api/client';
 import { useAppStore } from '../store/appStore';
 import type { ChatMessage } from '../types';
+import { getChatErrorMessage } from '../utils/errors';
 
 export function useChat() {
   const { analysisResult, addMessage } = useAppStore();
@@ -27,9 +28,10 @@ export function useChat() {
     } catch (err: any) {
       const errMsg: ChatMessage = {
         role: 'assistant',
-        content: 'Sorry, I could not process that question. Please try again.',
+        content: getChatErrorMessage(err),
         prompt: content,
         sources: [],
+        status: 'error',
         timestamp: new Date(),
       };
       addMessage(errMsg);

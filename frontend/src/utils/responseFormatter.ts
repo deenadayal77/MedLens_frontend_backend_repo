@@ -50,7 +50,7 @@ function cleanLine(value: string) {
       value
         .replace(/^[-•]\s+/, '')
         .replace(/^\d+[.)]\s+/, '')
-        .replace(/^(key takeaways?|optional insight|insight|action|next steps?|heading):\s*/i, ''),
+        .replace(/^(answer|what the report says|key takeaways?|optional insight|insight|action|next steps?|next step|heading):\s*/i, ''),
     ),
   );
 }
@@ -119,7 +119,7 @@ export function formatAssistantResponse(content: string, question?: string): Pro
     insight,
     action,
     details,
-    tags: ['Report context', 'Product-style answer'],
+    tags: ['Report context', 'Grounded answer'],
   };
 }
 

@@ -20,6 +20,7 @@ export interface ChatMessage {
   content: string;
   prompt?: string;
   sources?: string[];
+  status?: 'normal' | 'error';
   timestamp: Date;
 }
 

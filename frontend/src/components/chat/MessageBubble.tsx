@@ -19,6 +19,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, onReply }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const isError = message.status === 'error';
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -58,6 +59,11 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
     >
       <div className="flex w-full max-w-[min(620px,100%)] flex-col items-start">
         <span className="mb-1 px-1 text-xs font-semibold text-muted">MedLens AI</span>
+        {isError ? (
+          <div className="w-full rounded-[22px] rounded-bl-md border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700">
+            {message.content}
+          </div>
+        ) : (
         <div className="w-full overflow-hidden rounded-[24px] rounded-bl-md border border-rule bg-white shadow-glow">
           <div className="border-b border-rule p-4">
             <div className="flex items-start gap-3">
@@ -163,8 +169,9 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
             </button>
           </div>
         </div>
+        )}
 
-        {message.sources && message.sources.length > 0 && (
+        {!isError && message.sources && message.sources.length > 0 && (
           <SourceChips chunks={message.sources} />
         )}
       </div>

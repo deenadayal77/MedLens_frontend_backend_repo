@@ -199,6 +199,67 @@ def build_chat_chain(vectorstore: Chroma, urgency: UrgencyAssessment):
     )
 
 
+def retrieve_relevant_chunks(report_text: str, question: str, limit: int = 4) -> list[str]:
+    """Small local retriever used when embedding/vector search is unavailable."""
+    chunks = RecursiveCharacterTextSplitter(
+        chunk_size=900,
+        chunk_overlap=120,
+        separators=["\n\n", "\n", ". ", " ", ""],
+    ).split_text(report_text)
+
+    stop_words = {
+        "what",
+        "which",
+        "should",
+        "could",
+        "would",
+        "about",
+        "this",
+        "that",
+        "next",
+        "doctor",
+        "report",
+    }
+    question_terms = {
+        term for term in re.findall(r"[a-zA-Z]{4,}", question.lower()) if term not in stop_words
+    }
+
+    def score(chunk: str) -> tuple[int, int]:
+        normalized = chunk.lower()
+        overlap = sum(1 for term in question_terms if term in normalized)
+        risk_bonus = sum(
+            1
+            for term in ("tumor", "mass", "malignant", "bleeding", "critical", "urgent")
+            if term in normalized
+        )
+        return overlap + risk_bonus, len(chunk)
+
+    ranked = sorted(chunks, key=score, reverse=True)
+    selected = [chunk.strip() for chunk in ranked[:limit] if chunk.strip()]
+    return selected or [report_text[:1200].strip()]
+
+
+def answer_question_from_context(
+    *,
+    question: str,
+    source_chunks: list[str],
+    summary: str,
+    urgency: UrgencyAssessment,
+) -> ChatReply:
+    context = "\n\n".join(f"Source {index + 1}:\n{chunk}" for index, chunk in enumerate(source_chunks))
+    prompt = (
+        f"{CHATBOT_SYSTEM_PROMPT.strip()}\n\n"
+        f"Urgency level: {urgency.level}\n"
+        f"Urgency reason: {urgency.reason}\n\n"
+        f"Report summary:\n{summary}\n\n"
+        f"Selected source snippets:\n{context}\n\n"
+        f"Patient question: {question}\n\n"
+        "MedLens answer:"
+    )
+    response = get_chat_llm().invoke(prompt)
+    return ChatReply(answer=_extract_text(response), source_chunks=source_chunks[:3])
+
+
 def chatbot_response(chat_chain, question: str) -> ChatReply:
     result = chat_chain.invoke({"question": question})
     answer = str(result.get("answer", "")).strip()

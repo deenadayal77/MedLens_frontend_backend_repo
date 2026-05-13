@@ -6,44 +6,39 @@ from gtts import gTTS
 from io import BytesIO
 from fastapi.responses import StreamingResponse
 
-from backend.core.ai import build_vectorstore, build_chat_chain, chatbot_response
+from backend.core.ai import (
+    answer_question_from_context,
+    retrieve_relevant_chunks,
+)
 from backend.core.errors import ai_service_exception
 from backend.core.models import (
     ChatRequest, ChatResponse,
     TranslateRequest, TranslateResponse,
     TTSRequest,
 )
-from backend.session_store import get_session, update_session
+from backend.session_store import get_session
 
 router = APIRouter(prefix="/api", tags=["chat"])
-
-
-def _ensure_chat_ready(session_id: str):
-    session = get_session(session_id)
-    if session is None:
-        raise HTTPException(status_code=404, detail="Session not found or expired.")
-
-    if session.chat_ready and session.chat_chain is not None:
-        return session
-
-    vectorstore = build_vectorstore(
-        report_text=session.analysis_result.primary_context,
-        report_hash=session.analysis_result.report_hash,
-    )
-    chat_chain = build_chat_chain(
-        vectorstore=vectorstore,
-        urgency=session.analysis_result.urgency,
-    )
-    update_session(session_id, vectorstore=vectorstore, chat_chain=chat_chain, chat_ready=True)
-    return get_session(session_id)
 
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Send a follow-up question about the report."""
     try:
-        session = _ensure_chat_ready(request.session_id)
-        reply = chatbot_response(session.chat_chain, request.message)
+        session = get_session(request.session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="Session not found or expired.")
+
+        source_chunks = retrieve_relevant_chunks(
+            report_text=session.analysis_result.primary_context,
+            question=request.message,
+        )
+        reply = answer_question_from_context(
+            question=request.message,
+            source_chunks=source_chunks,
+            summary=session.analysis_result.summary,
+            urgency=session.analysis_result.urgency,
+        )
     except HTTPException:
         raise
     except Exception as exc:
