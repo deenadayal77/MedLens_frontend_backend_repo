@@ -4,14 +4,14 @@
 // @version      3.0
 // @description  Analyzes any text-selectable PDF open in Chrome using MedLens AI.
 // @author       MedLens
+// @match        *://*/*
 // @match        *://*/*.pdf
 // @match        *://*/*.pdf?*
-// @match        file:///*.pdf
-// @match        file:///*/
+// @match        file:///*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
 // @connect      medlensfrontendbackendrepo-production.up.railway.app
-// @run-at       document-idle
+// @run-at       document-end
 // ==/UserScript==
 
 (function () {
@@ -690,7 +690,23 @@
     });
   }
 
+  function shouldShowOnThisPage() {
+    const url = window.location.href.toLowerCase();
+    const title = document.title.toLowerCase();
+    const bodyText = (document.body?.innerText || '').slice(0, 3000).toLowerCase();
+
+    return (
+      url.includes('.pdf') ||
+      title.includes('.pdf') ||
+      bodyText.includes('patient:') ||
+      bodyText.includes('findings') ||
+      bodyText.includes('impression') ||
+      bodyText.includes('clinical information')
+    );
+  }
+
   function showFAB() {
+    if (!shouldShowOnThisPage()) return;
     if ($('ml-fab')) return;
     const fab = document.createElement('button');
     fab.id = 'ml-fab';
@@ -703,9 +719,18 @@
     document.body.appendChild(fab);
   }
 
-  if (document.body) {
-    showFAB();
-  } else {
-    document.addEventListener('DOMContentLoaded', showFAB);
+  function boot() {
+    if (document.body) showFAB();
   }
+
+  boot();
+  document.addEventListener('DOMContentLoaded', boot);
+  window.addEventListener('load', boot);
+
+  let attempts = 0;
+  const bootTimer = setInterval(() => {
+    attempts += 1;
+    boot();
+    if ($('ml-fab') || attempts >= 20) clearInterval(bootTimer);
+  }, 500);
 })();
